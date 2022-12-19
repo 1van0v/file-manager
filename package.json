@@ -1,0 +1,21 @@
+{
+  "name": "file-manager",
+  "version": "1.0.0",
+  "description": "A simple file manager",
+  "type": "module",
+  "main": "file-manager.js",
+  "scripts": {
+    "start": "node file-manager.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1van0v/file-manager.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/1van0v/file-manager/issues"
+  },
+  "homepage": "https://github.com/1van0v/file-manager#readme"
+}
