@@ -1,4 +1,6 @@
 import { Transform } from 'stream';
+import { CustomError } from './errors/custom.error.js';
+import { InvalidInputError } from './errors/invalid-input.error.js';
 
 import { handlersMap } from './handlers/handlers-map.js';
 
@@ -13,15 +15,21 @@ export class CommandHandler extends Transform {
   }
 
   handle({ type, payload }) {
-    let actionResult;
+    const handler = handlersMap[type];
 
-    if (type in handlersMap) {
-      actionResult = handlersMap[type](payload);
-    } else {
-      actionResult = 'Invalid input';
+    try {
+      if (!handler) {
+        throw new InvalidInputError();
+      }
+
+      this.push(handler(payload) + '\n');
+    } catch (e) {
+      if (e instanceof CustomError) {
+        this.push(e.message + '\n');
+      } else {
+        console.error(e);
+      }
     }
-
-    this.push(actionResult + '\n');
   }
 
   showPrompt() {

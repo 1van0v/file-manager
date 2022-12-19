@@ -21,7 +21,7 @@ pipeline(process.stdin, commandParser, commandHandler, process.stdout, (e) => {
 });
 
 process.on('SIGINT', () => process.exit(0));
-process.on('exit', () => {
+process.on('exit', (e) => {
   process.stdout.write(`\nThank you for using File Manager, ${username}, goodbye!\n`);
   process.exit(0);
 });
