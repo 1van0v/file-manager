@@ -5,7 +5,8 @@
   "type": "module",
   "main": "file-manager.js",
   "scripts": {
-    "start": "node file-manager.js"
+    "start": "node file-manager.js",
+    "dev": "node file-manager.js --username=test-user"
   },
   "repository": {
     "type": "git",

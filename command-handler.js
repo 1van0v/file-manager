@@ -9,20 +9,15 @@ export class CommandHandler extends Transform {
     super({ writableObjectMode: true });
   }
   _transform(action, encoding, next) {
-    this.handle(action);
-    this.showPrompt();
-    next();
+    this.handle(action, next);
   }
 
-  handle({ type, payload }) {
+  async handle({ type, payload }, next) {
     const handler = handlersMap[type];
 
     try {
-      if (!handler) {
-        throw new InvalidInputError();
-      }
-
-      this.push(handler(payload) + '\n');
+      this.checkHandler(handler);
+      await this.runHandler(handler, payload);
     } catch (e) {
       if (e instanceof CustomError) {
         this.push(e.message + '\n');
@@ -30,9 +25,30 @@ export class CommandHandler extends Transform {
         console.error(e);
       }
     }
+
+    this.showPrompt();
+    next();
   }
 
   showPrompt() {
     this.push('\n' + 'You are currently in ' + process.cwd() + '\n'.repeat(2));
+  }
+
+  checkHandler(handler) {
+    if (!handler) {
+      throw new InvalidInputError();
+    }
+  }
+
+  async runHandler(handler, payload) {
+    const data = await handler(payload);
+
+    if (Array.isArray(data)) {
+      return console.table(data);
+    }
+
+    if (data) {
+      this.push(data + '\n');
+    }
   }
 }
