@@ -10,5 +10,5 @@ export const initHandler = ([user]) => {
 
   process.chdir(os.homedir());
 
-  return 'Welcome to the File Manager, ' + user.trim() + '!';
+  return 'Welcome to the File Manager, ' + user + '!';
 };

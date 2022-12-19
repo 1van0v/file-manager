@@ -1,45 +1,57 @@
 import fs from 'fs/promises';
+import { createReadStream, createWriteStream } from 'fs';
 import os from 'os';
-
-import { OperationFailedError } from '../errors/operation-failed.error.js';
+import { pipeline } from 'stream/promises';
 
 export const up = () => process.chdir('..');
+
+const getFileType = (dirent) => {
+  if (dirent.isDirectory()) {
+    return 'directory';
+  } else if (dirent.isBlockDevice()) {
+    return 'block device';
+  } else if (dirent.isFIFO()) {
+    return 'pipe';
+  } else if (dirent.isCharacterDevice()) {
+    return 'character device';
+  } else if (dirent.isSocket()) {
+    return 'socket';
+  } else {
+    return 'file';
+  }
+};
+
+const sortByType = (aDirent, bDirent) => {
+  if (aDirent.isDirectory()) {
+    return bDirent.isDirectory() ? 0 : -1;
+  } else {
+    return 1;
+  }
+};
 
 export const ls = async () => {
   const items = await fs.readdir(process.cwd(), { withFileTypes: true });
 
   return items
-    .sort((a, b) => {
-      if (a.isDirectory()) {
-        return b.isDirectory() ? 0 : -1;
-      } else {
-        return 1;
-      }
-    })
-    .map((i) => {
-      const name = i.name;
-      let type = 'file';
-
-      if (i.isDirectory()) {
-        type = 'directory';
-      } else if (i.isBlockDevice()) {
-        type = 'block device';
-      } else if (i.isFIFO()) {
-        type = 'pipe';
-      } else if (i.isCharacterDevice()) {
-        type = 'character device';
-      } else if (i.isSocket()) {
-        type = 'socket';
-      }
-
-      return { name, type };
-    });
+    .sort(sortByType)
+    .map((i) => ({ name: i.name, type: getFileType(i) }));
 };
 
 export const cd = ([path]) => {
-  try {
-    process.chdir(path.trim().replace('~', os.userInfo().homedir));
-  } catch {
-    throw new OperationFailedError();
-  }
+  process.chdir(path.replace('~', os.userInfo().homedir));
 };
+
+export const cat = ([path]) => createReadStream(path);
+
+export const add = async ([filename]) => fs.open(filename, 'wx');
+
+export const rn = async ([oldName, newName]) => fs.rename(oldName, newName);
+
+export const cp = ([src, dist]) => pipeline(createReadStream(src), createWriteStream(dist));
+
+export const mv = async (args) => {
+  await cp(args);
+  fs.rm(args[0]);
+};
+
+export const rm = async ([filename]) => fs.rm(filename);

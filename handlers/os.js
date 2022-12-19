@@ -19,8 +19,6 @@ const osInfoGetter = {
 export const osHandler = (opts) => {
   let [opt] = Object.keys(optionsParser(opts));
 
-  opt = opt.trim();
-
   if (opt in osInfoGetter) {
     return osInfoGetter[opt]();
   }

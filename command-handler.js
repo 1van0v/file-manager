@@ -1,6 +1,8 @@
-import { Transform } from 'stream';
+import { Readable, Transform } from 'stream';
+
 import { CustomError } from './errors/custom.error.js';
 import { InvalidInputError } from './errors/invalid-input.error.js';
+import { OperationFailedError } from './errors/operation-failed.error.js';
 
 import { handlersMap } from './handlers/handlers-map.js';
 
@@ -41,7 +43,18 @@ export class CommandHandler extends Transform {
   }
 
   async runHandler(handler, payload) {
-    const data = await handler(payload);
+    let data;
+
+    try {
+      data = await handler(payload);
+    } catch (e) {
+      console.log('error', e);
+      throw new OperationFailedError();
+    }
+
+    if (data instanceof Readable) {
+      return this.readStream(data);
+    }
 
     if (Array.isArray(data)) {
       return console.table(data);
@@ -51,4 +64,12 @@ export class CommandHandler extends Transform {
       this.push(data + '\n');
     }
   }
+
+  readStream = (readStream) => {
+    return new Promise((resolve, reject) => {
+      readStream.on('data', (data) => this.push(data));
+      readStream.on('end', () => resolve());
+      readStream.on('error', () => reject(new OperationFailedError()));
+    });
+  };
 }

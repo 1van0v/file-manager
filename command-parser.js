@@ -6,8 +6,8 @@ export class CommandParser extends Transform {
     this.push({ type: 'init', payload: [username] });
   }
   _transform(chunk, encoding, next) {
-    const [type, ...payload] = chunk.toString().split(' ');
-    this.push({ type: type.trim(), payload });
+    const [type, ...options] = chunk.toString().split(' ');
+    this.push({ type: type.trim(), payload: options.map((opt) => opt.trim()) });
     next();
   }
 }
