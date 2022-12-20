@@ -48,7 +48,6 @@ export class CommandHandler extends Transform {
     try {
       data = await handler(payload);
     } catch (e) {
-      console.log('error', e);
       throw new OperationFailedError();
     }
 
