@@ -48,7 +48,9 @@ export class CommandHandler extends Transform {
     try {
       data = await handler(payload);
     } catch (e) {
-      throw new OperationFailedError();
+      const error = e instanceof CustomError ? e : new OperationFailedError();
+
+      throw error;
     }
 
     if (data instanceof Readable) {

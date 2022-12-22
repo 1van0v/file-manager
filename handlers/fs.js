@@ -3,6 +3,9 @@ import { createReadStream, createWriteStream } from 'fs';
 import os from 'os';
 import { pipeline } from 'stream/promises';
 
+import { destinationResolver } from '../utils/destination-resolver.js';
+import { InvalidInputError } from '../errors/invalid-input.error.js';
+
 export const up = () => process.chdir('..');
 
 const getFileType = (dirent) => {
@@ -32,26 +35,35 @@ const sortByType = (aDirent, bDirent) => {
 export const ls = async () => {
   const items = await fs.readdir(process.cwd(), { withFileTypes: true });
 
-  return items
-    .sort(sortByType)
-    .map((i) => ({ name: i.name, type: getFileType(i) }));
+  return items.sort(sortByType).map((i) => ({ name: i.name, type: getFileType(i) }));
 };
 
 export const cd = ([path]) => {
   process.chdir(path.replace('~', os.userInfo().homedir));
 };
 
-export const cat = ([path]) => createReadStream(path);
+export const cat = ([path]) => {
+  if (!path) {
+    throw new InvalidInputError();
+  }
 
-export const add = async ([filename]) => fs.open(filename, 'wx');
+  return createReadStream(path);
+};
+
+export const add = async ([filename]) => {
+  await fs.open(filename, 'wx');
+};
 
 export const rn = async ([oldName, newName]) => fs.rename(oldName, newName);
 
-export const cp = ([src, dist]) => pipeline(createReadStream(src), createWriteStream(dist));
+export const cp = async ([src, dist]) => {
+  const destFile = await destinationResolver(src, dist);
+  return pipeline(createReadStream(src), createWriteStream(destFile));
+}
+
+export const rm = async ([filename]) => fs.rm(filename);
 
 export const mv = async (args) => {
   await cp(args);
-  fs.rm(args[0]);
+  await fs.rm(args[0]);
 };
-
-export const rm = async ([filename]) => fs.rm(filename);
